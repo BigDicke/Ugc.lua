@@ -1,0 +1,84 @@
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+-- Biblioteca de menu (estiloso e compatível com dispositivos móveis)
+local Library = loadstring(game:HttpGet("https://pastebin.com/raw/w4cWJ3VP"))() -- Menu estiloso para Fluxus
+local Window = Library:CreateWindow("Auto Buyer") -- Janela principal
+Window:SetDraggable(true) -- Permitir que o menu seja movido
+
+-- Variável para controlar se o menu está visível
+local menuVisible = true
+Window:SetVisible(menuVisible) -- Menu começa visível
+
+-- Aba principal
+local MainTab = Window:CreateTab("Auto Farm")
+local autoFarm = false -- Estado do AutoFarm
+
+-- Toggle para ativar/desativar o AutoFarm
+MainTab:CreateToggle("Ativar AutoFarm", function(state)
+    autoFarm = state
+end)
+
+-- Botão para abrir/fechar o menu
+MainTab:CreateButton("Abrir/Fechar Menu", function()
+    menuVisible = not menuVisible
+    Window:SetVisible(menuVisible)
+end)
+
+-- Função para teleportar até o botão
+local function TeleportTo(part)
+    local player = game.Players.LocalPlayer
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = part.CFrame + Vector3.new(0, 2, 0) -- Teleporta acima do botão
+        wait(0.5) -- Pausa curta para evitar problemas
+    end
+end
+
+-- Função para encontrar e interagir com botões
+local function FindAndCollectButtons()
+    while autoFarm do
+        local foundButton = false
+
+        for _, button in pairs(workspace:GetDescendants()) do
+            if button:IsA("BasePart") and button:FindFirstChild("BillboardGui") then
+                local billboard = button:FindFirstChild("BillboardGui")
+                if billboard:FindFirstChild("TextLabel") then
+                    local textLabel = billboard.TextLabel
+                    if textLabel.Text ~= "" and textLabel.TextColor3 == Color3.new(0, 1, 1) then -- Cor azul clara
+                        foundButton = true
+                        repeat
+                            TeleportTo(button)
+                            wait(0.5) -- Pequena pausa entre as interações
+                        until not button:IsDescendantOf(workspace) or not autoFarm -- Continua até o botão sumir
+                    end
+                end
+            end
+        end
+
+        if not foundButton then
+            print("Nenhum botão encontrado! Aguardando...")
+            wait(2) -- Pausa antes de tentar novamente
+        end
+    end
+end
+
+-- Loop para ativar o AutoFarm
+task.spawn(function()
+    while wait(1) do
+        if autoFarm then
+            FindAndCollectButtons()
+        end
+    end
+end)
+
+-- Bind para abrir/fechar o menu com uma tecla (tecla "P")
+game:GetService("UserInputService").InputBegan:Connect(function(input, isProcessed)
+    if not isProcessed and input.KeyCode == Enum.KeyCode.P then
+        menuVisible = not menuVisible
+        Window:SetVisible(menuVisible)
+    end
+end)
+
+-- Mensagem de confirmação
+print("AutoFarm carregado com sucesso!")
