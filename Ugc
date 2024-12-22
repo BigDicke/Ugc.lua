@@ -1,0 +1,74 @@
+if not game:IsLoaded() then game.Loaded:Wait() end
+
+-- Biblioteca para criar o menu
+local Library = loadstring(game:HttpGet("https://pastebin.com/raw/3s3Y4ddQ"))() -- Menu confiável e leve
+local Window = Library:CreateWindow("Meu Script - Menu") -- Janela do menu principal
+
+-- Aba para UGC
+local TabUGC = Window:CreateTab("UGC") 
+local ugcItemId = ""
+
+-- Campo de texto para inserir o ID do UGC
+TabUGC:CreateTextBox("ID do UGC", "Insira o ID do UGC aqui", true, function(value)
+    ugcItemId = value
+end)
+
+-- Botão para resgatar UGC
+TabUGC:CreateButton("Resgatar UGC", function()
+    if ugcItemId ~= "" then
+        local args = {[1] = ugcItemId}
+        game:GetService("ReplicatedStorage").RemoteFunction:InvokeServer(unpack(args)) -- Substitua pelo RemoteFunction correto
+        print("UGC resgatado: " .. ugcItemId)
+    else
+        print("Por favor, insira o ID do UGC.")
+    end
+end)
+
+-- Aba para botões
+local TabButtons = Window:CreateTab("Botões")
+local autoCollect = false
+
+-- Toggle para ligar/desligar o teleporte automático
+TabButtons:CreateToggle("Auto Teleportar", function(state)
+    autoCollect = state
+end)
+
+-- Função para teleportar até o botão
+local function TeleportTo(part)
+    local player = game.Players.LocalPlayer
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = part.CFrame + Vector3.new(0, 2, 0) -- Teleporta acima do botão
+        wait(1) -- Aguarda antes de continuar
+    end
+end
+
+-- Função principal para encontrar e interagir com botões
+local function CollectButtons()
+    while autoCollect do
+        for _, button in pairs(workspace:GetDescendants()) do
+            if button:IsA("BasePart") and button:FindFirstChild("BillboardGui") then
+                local billboard = button:FindFirstChild("BillboardGui")
+                if billboard:FindFirstChild("TextLabel") then
+                    local textLabel = billboard.TextLabel
+                    if textLabel.TextColor3 == Color3.new(1, 0, 0) then -- Verifica se o texto é vermelho
+                        TeleportTo(button) -- Teleporta para o botão
+                        wait(1) -- Aguarda um pouco antes de buscar o próximo botão
+                    end
+                end
+            end
+        end
+        wait(2) -- Intervalo entre verificações
+    end
+end
+
+-- Loop para ativar a coleta automática
+spawn(function()
+    while wait(1) do
+        if autoCollect then
+            CollectButtons()
+        end
+    end
+end)
+
+-- Mensagem para confirmar carregamento
+print("Menu carregado com sucesso!")
